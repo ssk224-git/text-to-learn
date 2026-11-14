@@ -15,8 +15,15 @@ export const env = {
 
   aiProvider: clean(process.env.AI_PROVIDER) || 'gemini',
   geminiKey: clean(process.env.GEMINI_API_KEY),
-  geminiModel: clean(process.env.GEMINI_MODEL) || 'gemini-2.5-flash',
-  geminiTtsModel: clean(process.env.GEMINI_TTS_MODEL) || 'gemini-2.5-flash-preview-tts',
+  // Comma-separated list: the first model is used, the next ones are backups for when
+  // a model is overloaded (503), rate-limited (429) or retired (404).
+  geminiModels: (clean(process.env.GEMINI_MODEL) || 'gemini-3.6-flash,gemini-3.5-flash,gemini-3.5-flash-lite')
+    .split(',')
+    .map((m) => m.trim())
+    .filter(Boolean),
+  geminiTtsModel: clean(process.env.GEMINI_TTS_MODEL) || 'gemini-omni-flash-preview',
+  // "low" cut hidden reasoning tokens ~5x in testing with no visible quality loss. Set "off" to disable.
+  geminiThinkingLevel: clean(process.env.GEMINI_THINKING_LEVEL) || 'low',
 
   youtubeKey: clean(process.env.YOUTUBE_API_KEY),
 

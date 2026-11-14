@@ -24,8 +24,13 @@ export function errorHandler(err, req, res, next) {
   }
 
   if (status >= 500) {
-    console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
-    if (env.nodeEnv === 'production' && !err.expose) message = 'Something went wrong on the server.';
+    if (err.expose) {
+      // Expected problems (missing key, AI busy): one line is enough.
+      console.warn(`[warn] ${req.method} ${req.path} -> ${status}: ${message}`);
+    } else {
+      console.error(`[error] ${req.method} ${req.originalUrl}:`, err);
+      if (env.nodeEnv === 'production') message = 'Something went wrong on the server.';
+    }
   }
 
   res.status(status).json({ error: message });

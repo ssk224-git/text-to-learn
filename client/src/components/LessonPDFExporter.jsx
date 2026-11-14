@@ -31,7 +31,7 @@ function PrintableLesson({ lesson, courseTitle, moduleTitle }) {
         <div data-pdf-block style={{ background: '#eef2ff', borderRadius: 8, padding: '12px 16px', marginBottom: 18 }}>
           <div style={{ fontWeight: 700, marginBottom: 4 }}>Learning objectives</div>
           {lesson.objectives.map((o, i) => (
-            <div key={i}>• {o}</div>
+            <div key={i}>• {formatInline(o, inline)}</div>
           ))}
         </div>
       )}
@@ -91,8 +91,11 @@ export default function LessonPDFExporter({ lesson, courseTitle, moduleTitle }) 
     try {
       // Load the PDF libraries only when needed (keeps the first page load fast).
       const [{ default: html2canvas }, { jsPDF }] = await Promise.all([import('html2canvas-pro'), import('jspdf')]);
-      await new Promise((r) => requestAnimationFrame(() => requestAnimationFrame(r))); // wait for render
+      // Wait until React has rendered the hidden printable copy (timers work even in background tabs).
+      for (let i = 0; i < 40 && !ref.current; i++) await new Promise((r) => setTimeout(r, 50));
+      await new Promise((r) => setTimeout(r, 100));
       const node = ref.current;
+      if (!node) throw new Error('Printable lesson did not render');
 
       const scale = 2;
       const canvas = await html2canvas(node, { scale, backgroundColor: '#ffffff', logging: false });

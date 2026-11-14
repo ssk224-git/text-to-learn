@@ -22,7 +22,7 @@ app.get('/api/health', (req, res) =>
     status: 'ok',
     auth: authEnabled ? 'auth0' : 'dev-mode',
     ai: env.aiProvider,
-    model: env.geminiModel,
+    models: env.geminiModels,
     youtube: Boolean(env.youtubeKey),
   })
 );
@@ -38,7 +38,7 @@ connectDB(env.mongoUri)
   .then(() => {
     app.listen(env.port, () => {
       console.log(`API running on http://localhost:${env.port}`);
-      console.log(`Auth: ${authEnabled ? 'Auth0' : 'DEV MODE (no login)'} | AI: ${env.aiProvider} (${env.geminiModel}) | YouTube: ${env.youtubeKey ? 'on' : 'off'}`);
+      console.log(`Auth: ${authEnabled ? 'Auth0' : 'DEV MODE (no login)'} | AI: ${env.aiProvider} (${env.geminiModels.join(' → ')}) | YouTube: ${env.youtubeKey ? 'on' : 'off'}`);
     });
   })
   .catch((err) => {
