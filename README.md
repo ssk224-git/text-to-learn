@@ -4,7 +4,9 @@ Type any topic (*"Intro to React Hooks"*, *"Basics of Copyright Law"*) and get a
 
 [![CI](https://github.com/ssk224-git/text-to-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/ssk224-git/text-to-learn/actions/workflows/ci.yml)
 
-> **Live demo:** _add your Vercel URL here_ · **API:** _add your Render URL here_ · **Demo video:** _add link_
+> **Live demo:** https://text-to-learn-henna.vercel.app · **API:** https://text-to-learn-sx9s.onrender.com/api/health · **Demo video:** _coming soon_
+>
+> The API runs on Render's free plan and sleeps when idle, so the first request after a break can take ~50 seconds.
 
 <!-- Add screenshots: docs/home.png, docs/course.png, docs/lesson.png -->
 
