@@ -2,7 +2,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { extractJson } from '../utils/parseJson.js';
-import { normalizeCourse, normalizeLesson } from '../utils/validators.js';
+import { normalizeCourse, normalizeLesson, normalizeHinglish } from '../utils/validators.js';
 import { checkTopic } from '../utils/guardrails.js';
 
 test('extractJson handles raw JSON, code fences and surrounding text', () => {
@@ -56,6 +56,29 @@ test('normalizeLesson fixes MCQ answers, drops broken blocks and keeps one video
   assert.equal(value.content.filter((b) => b.type === 'video').length, 1);
   assert.ok(value.content.some((b) => b.text === 'becomes a paragraph'));
   assert.equal(problems.length, 0);
+});
+
+test('normalizeLesson keeps list and tip blocks and maps callouts to tips', () => {
+  const { value } = normalizeLesson({
+    objectives: ['Explain X'],
+    content: [
+      { type: 'list', items: ['one', '', 'two'] },
+      { type: 'list', items: [] },
+      { type: 'callout', text: 'Remember this' },
+      { type: 'tip', text: '' },
+    ],
+  });
+  assert.deepEqual(value.content, [
+    { type: 'list', items: ['one', 'two'] },
+    { type: 'tip', text: 'Remember this' },
+  ]);
+});
+
+test('normalizeHinglish requires readable Roman text and real Devanagari', () => {
+  const roman = Array(90).fill('dekho').join(' ') + '.';
+  assert.equal(normalizeHinglish({ roman, devanagari: 'देखो, React में state.' }).problems.length, 0);
+  assert.ok(normalizeHinglish({ roman, devanagari: 'dekho React mein' }).problems.length > 0);
+  assert.ok(normalizeHinglish({ roman: 'too short', devanagari: 'देखो' }).problems.length > 0);
 });
 
 test('checkTopic blocks prompt injection and bad input', () => {

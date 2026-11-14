@@ -22,8 +22,10 @@ export const env = {
     .map((m) => m.trim())
     .filter(Boolean),
   geminiTtsModel: clean(process.env.GEMINI_TTS_MODEL) || 'gemini-omni-flash-preview',
-  // "low" cut hidden reasoning tokens ~5x in testing with no visible quality loss. Set "off" to disable.
+  // How much hidden "thinking" the model does. "low" cut tokens ~56% but lessons felt thinner,
+  // so lessons get "medium" and quick tasks (outline, Hinglish) get "low". "off" = model default.
   geminiThinkingLevel: clean(process.env.GEMINI_THINKING_LEVEL) || 'low',
+  geminiLessonThinkingLevel: clean(process.env.GEMINI_LESSON_THINKING_LEVEL) || 'medium',
 
   youtubeKey: clean(process.env.YOUTUBE_API_KEY),
 

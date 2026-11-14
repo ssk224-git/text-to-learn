@@ -90,17 +90,19 @@ export async function regenerateLesson(req, res) {
 
 async function getOrCreateHinglish(lesson) {
   if (!lesson.isEnriched) throw new AppError(400, 'Open the lesson first so its content exists.');
-  if (!lesson.hinglish) {
+  // Older lessons cached a single Devanagari string; regenerate those in the new two-script format.
+  if (!lesson.hinglish?.roman) {
     lesson.hinglish = await generateHinglishScript(lesson);
+    lesson.markModified('hinglish');
     await lesson.save();
   }
   return lesson.hinglish;
 }
 
-// POST /api/lessons/:lessonId/hinglish  -> { script }
+// POST /api/lessons/:lessonId/hinglish  -> { roman, devanagari }
 export async function getHinglishScript(req, res) {
   const lesson = await findOwnedLesson(req.params.lessonId, req.user.sub);
-  res.json({ script: await getOrCreateHinglish(lesson) });
+  res.json(await getOrCreateHinglish(lesson));
 }
 
 const VOICES = new Set(['Kore', 'Puck', 'Charon', 'Aoede', 'Leda', 'Orus', 'Zephyr']);
@@ -108,9 +110,9 @@ const VOICES = new Set(['Kore', 'Puck', 'Charon', 'Aoede', 'Leda', 'Orus', 'Zeph
 // POST /api/lessons/:lessonId/hinglish/audio  -> audio/wav
 export async function getHinglishAudio(req, res) {
   const lesson = await findOwnedLesson(req.params.lessonId, req.user.sub);
-  const script = await getOrCreateHinglish(lesson);
+  const { devanagari } = await getOrCreateHinglish(lesson);
   const voice = VOICES.has(req.body?.voice) ? req.body.voice : 'Kore';
-  const wav = await textToSpeech(script, { voice });
+  const wav = await textToSpeech(devanagari, { voice });
   res.set({ 'Content-Type': 'audio/wav', 'Content-Length': wav.length, 'Cache-Control': 'no-store' });
   res.send(wav);
 }
