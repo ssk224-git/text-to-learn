@@ -11,7 +11,13 @@ export function errorHandler(err, req, res, next) {
   let status = Number(err.status || err.statusCode) || 500;
   let message = err.message || 'Something went wrong.';
 
-  if (err instanceof mongoose.Error.CastError) {
+  if (/MongoServerSelectionError|MongoNetworkError|MongoNotConnectedError/.test(err.name)) {
+    // Usually: your IP isn't on MongoDB Atlas's Network Access list, or Atlas is briefly down.
+    status = 503;
+    message = 'The database is unreachable right now. Please try again in a minute.';
+    console.warn(`[warn] ${req.method} ${req.path} -> database unreachable (${err.name}). Check Atlas Network Access.`);
+    return res.status(status).json({ error: message });
+  } else if (err instanceof mongoose.Error.CastError) {
     status = 404;
     message = 'Not found (invalid id).';
   } else if (err instanceof mongoose.Error.ValidationError) {
