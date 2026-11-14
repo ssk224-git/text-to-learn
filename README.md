@@ -2,7 +2,7 @@
 
 Type any topic (*"Intro to React Hooks"*, *"Basics of Copyright Law"*) and get a complete, structured online course: 3–6 modules, 3–5 lessons each, with explanations, code examples, a YouTube video, quizzes, PDF download and a Hinglish audio explanation.
 
-![CI](https://github.com/OWNER/text-to-learn/actions/workflows/ci.yml/badge.svg)
+[![CI](https://github.com/ssk224-git/text-to-learn/actions/workflows/ci.yml/badge.svg)](https://github.com/ssk224-git/text-to-learn/actions/workflows/ci.yml)
 
 > **Live demo:** _add your Vercel URL here_ · **API:** _add your Render URL here_ · **Demo video:** _add link_
 
