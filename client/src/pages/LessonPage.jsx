@@ -8,6 +8,7 @@ import LessonPDFExporter from '../components/LessonPDFExporter.jsx';
 import HinglishAudio from '../components/HinglishAudio.jsx';
 import CourseOutline from '../components/CourseOutline.jsx';
 import GenerationLoader from '../components/GenerationLoader.jsx';
+import { formatInline } from '../utils/formatText.jsx';
 import ErrorMessage from '../components/ErrorMessage.jsx';
 
 const LESSON_STEPS = [
@@ -74,11 +75,12 @@ export default function LessonPage() {
 
         <div className="mt-5 flex flex-wrap items-center gap-2">
           <LessonPDFExporter lesson={lesson} courseTitle={course.title} moduleTitle={module.title} />
-          <HinglishAudio key={lesson._id + (lesson.updatedAt || '')} lessonId={lesson._id} lessonTitle={lesson.title} />
           <button onClick={handleRegenerate} disabled={regenerating} className="btn-secondary" title="Rewrite this lesson">
             {regenerating ? <LoaderCircle size={16} className="animate-spin" /> : <RefreshCw size={16} />}
             <span className="hidden sm:inline">{regenerating ? 'Rewriting…' : 'Regenerate'}</span>
           </button>
+          {/* Last in the row: its panel opens full-width below the buttons */}
+          <HinglishAudio key={lesson._id + (lesson.updatedAt || '')} lessonId={lesson._id} lessonTitle={lesson.title} />
         </div>
 
         {lesson.objectives?.length > 0 && (
@@ -88,7 +90,7 @@ export default function LessonPage() {
             </h2>
             <ul className="mt-3 space-y-1.5 text-sm text-slate-300">
               {lesson.objectives.map((o, i) => (
-                <li key={i} className="flex gap-2"><span className="text-indigo-400">✓</span>{o}</li>
+                <li key={i} className="flex gap-2"><span className="text-indigo-400">✓</span><span>{formatInline(o)}</span></li>
               ))}
             </ul>
           </section>
