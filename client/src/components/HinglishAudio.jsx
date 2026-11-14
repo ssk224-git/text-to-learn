@@ -109,6 +109,8 @@ export default function HinglishAudio({ lessonId, lessonTitle }) {
 
   const busy = status === 'script' || status === 'audio';
   const hasHindiVoice = voices.some(isHindi);
+  // Edge's "Online (Natural)" voices sound human; Chrome's "Google हिन्दी" and old Windows voices sound robotic.
+  const hasNaturalHindi = voices.some((v) => isHindi(v) && /natural|online/i.test(v.name));
 
   return (
     <>
@@ -180,6 +182,13 @@ export default function HinglishAudio({ lessonId, lessonTitle }) {
             <p className="text-xs text-amber-300">
               No Hindi voice was found in this browser, so an English voice reads the Roman text. For the most natural
               Hindi voice, open this site in Microsoft Edge (voice "Swara") or Google Chrome (voice "Google हिन्दी").
+            </p>
+          )}
+
+          {!audioUrl && hasHindiVoice && !hasNaturalHindi && (
+            <p className="text-xs text-amber-300">
+              Tip: this browser's Hindi voice sounds robotic. For a natural voice (free), open this site in Microsoft Edge
+              and choose "Madhur" (male) or "Swara" (female) in the voice list.
             </p>
           )}
 
