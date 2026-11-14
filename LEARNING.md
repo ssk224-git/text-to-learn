@@ -93,6 +93,9 @@ You type a topic ─▶ React app ─▶ Express API ─▶ Gemini (AI)
 5. **No AI voice on the free tier:** the TTS model returned 429. Fix: fall back to the browser's built-in Hindi voice, and stop retrying the AI voice for 30 minutes.
 6. **PDF stuck in background tabs:** `requestAnimationFrame` doesn't fire in hidden tabs. Fix: wait with `setTimeout` instead.
 7. **React dev mode calls effects twice:** that would have generated each lesson twice. Fix: the server shares one in-flight AI call per lesson.
+8. **"SSL alert number 80" from MongoDB:** the home IP address changed and wasn't on Atlas's allow list. Fix: allow `0.0.0.0/0` (Render needs it too) and show a friendly "database unreachable" message instead of the raw error.
+9. **Cheaper wasn't better:** low thinking saved 56% of tokens, but users said lessons felt thin. Fix: lessons use medium thinking plus a much stricter teaching prompt (define terms, analogy, worked example, common mistakes); only quick tasks stay on low. A real cost-vs-quality trade-off.
+10. **The voice skipped Hindi words:** an English voice can't read Devanagari. Fix: generate both Roman and Devanagari versions, and give each voice the version it can pronounce.
 
 ## 6. Interview questions to practise
 

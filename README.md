@@ -14,10 +14,11 @@ Type any topic (*"Intro to React Hooks"*, *"Basics of Copyright Law"*) and get a
 |---|---|
 | **Prompt → course** | Gemini designs a curriculum (title, description, tags, modules, lesson titles) returned as strict JSON |
 | **Lessons on demand** | Only the outline is generated up front. Each lesson is written the first time someone opens it, then saved, so it's never paid for twice |
-| **Rich lesson blocks** | Headings, paragraphs (bold/inline code), syntax-highlighted code, YouTube video, interactive MCQs with explanations |
+| **Rich lesson blocks** | Headings, paragraphs (bold/inline code), bullet lists, tip boxes, syntax-highlighted code with a line-by-line walkthrough, YouTube video, interactive MCQs with explanations |
+| **Teaching-quality prompt** | Every lesson defines new terms, explains *why* before *how*, uses an everyday analogy and a worked example, and ends with "Common mistakes" and "Key takeaways" |
 | **YouTube videos** | The AI writes a search query; the backend calls the YouTube Data API (results cached 24h to protect the 10k/day quota) |
 | **Download as PDF** | A print-styled copy is captured with html2canvas-pro and paginated with jsPDF, breaking only *between* blocks |
-| **Hinglish explanation** | Gemini writes a Hindi + English explanation; Gemini TTS reads it, or the browser's Hindi voice if AI audio isn't available |
+| **Hinglish explanation** | Gemini writes a teacher-style explanation in two scripts: Roman Hinglish to read, and Devanagari for Hindi voices. Gemini TTS reads it, or the browser's voices (with voice picker and slow/normal/fast speed) when AI audio isn't available |
 | **Secure login** | Auth0 (OAuth 2.0 + JWT). The API verifies the token and only shows you your own courses |
 | **Dev mode** | Without Auth0/YouTube keys the app still runs (no login, "search on YouTube" link) so you can develop first |
 
