@@ -41,6 +41,20 @@ function PrintableLesson({ lesson, courseTitle, moduleTitle }) {
           return <div key={i} data-pdf-block style={{ fontSize: 19, fontWeight: 700, color: '#0f172a', margin: '20px 0 8px' }}>{b.text}</div>;
         if (b.type === 'paragraph')
           return <div key={i} data-pdf-block style={block}>{formatInline(b.text, inline)}</div>;
+        if (b.type === 'list')
+          return (
+            <div key={i} data-pdf-block style={{ ...block, paddingLeft: 8 }}>
+              {b.items.map((item, j) => (
+                <div key={j} style={{ marginBottom: 3 }}>• {formatInline(item, inline)}</div>
+              ))}
+            </div>
+          );
+        if (b.type === 'tip')
+          return (
+            <div key={i} data-pdf-block style={{ ...block, background: '#fffbeb', border: '1px solid #fde68a', borderRadius: 6, padding: '10px 14px' }}>
+              <b>Tip: </b>{formatInline(b.text, inline)}
+            </div>
+          );
         if (b.type === 'code')
           return (
             <pre key={i} data-pdf-block style={{ ...block, background: C.soft, border: `1px solid ${C.border}`, borderRadius: 6, padding: 12, fontFamily: 'Consolas, monospace', fontSize: 12, whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>

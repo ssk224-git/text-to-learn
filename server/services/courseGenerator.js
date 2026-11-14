@@ -2,8 +2,9 @@
 import * as ai from './ai/index.js';
 import { generateCoursePrompt, generateLessonPrompt, generateHinglishPrompt, retryFeedback } from './prompts.js';
 import { extractJson } from '../utils/parseJson.js';
-import { normalizeCourse, normalizeLesson, lessonToPlainText } from '../utils/validators.js';
+import { normalizeCourse, normalizeLesson, normalizeHinglish, lessonToPlainText } from '../utils/validators.js';
 import { AppError } from '../utils/AppError.js';
+import { env } from '../config/env.js';
 
 const MAX_ATTEMPTS = 2;
 
@@ -24,15 +25,15 @@ function summarise(started, calls) {
   return meta;
 }
 
-// Generic "ask for JSON, check it, retry once" loop used by both course and lesson generation.
-async function generateValidated({ basePrompt, normalize, label, temperature }) {
+// Generic "ask for JSON, check it, retry once" loop used by course, lesson and Hinglish generation.
+async function generateValidated({ basePrompt, normalize, label, temperature, thinking }) {
   const started = Date.now();
   const calls = [];
   let prompt = basePrompt;
   let last = null;
 
   for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-    const call = await ai.generateText(prompt, { json: true, temperature });
+    const call = await ai.generateText(prompt, { json: true, temperature, thinking });
     calls.push(call);
 
     let raw;
@@ -78,7 +79,8 @@ export async function generateLessonContent(ctx) {
     basePrompt: generateLessonPrompt(ctx),
     normalize: normalizeLesson,
     label: 'lesson',
-    temperature: 0.7,
+    temperature: 0.6,
+    thinking: env.geminiLessonThinkingLevel,
   });
   if (!result.value?.content?.length) {
     throw new AppError(502, "The AI couldn't write this lesson. Please try again.");
@@ -87,14 +89,17 @@ export async function generateLessonContent(ctx) {
   return result;
 }
 
+// Returns { roman, devanagari }: Roman letters for reading, Devanagari for Hindi voices.
 export async function generateHinglishScript(lesson) {
-  const call = await ai.generateText(
-    generateHinglishPrompt({ lessonTitle: lesson.title, lessonText: lessonToPlainText(lesson) }),
-    { temperature: 0.8 }
-  );
-  const script = call.text.replace(/[*#`]/g, '').trim();
-  if (!script) throw new AppError(502, 'The AI returned an empty explanation. Please try again.');
-  return script;
+  const result = await generateValidated({
+    basePrompt: generateHinglishPrompt({ lessonTitle: lesson.title, lessonText: lessonToPlainText(lesson) }),
+    normalize: normalizeHinglish,
+    label: 'hinglish',
+    temperature: 0.7,
+  });
+  if (!result.value?.roman) throw new AppError(502, 'The AI returned an empty explanation. Please try again.');
+  if (!result.value.devanagari) result.value.devanagari = result.value.roman;
+  return result.value;
 }
 
 export const textToSpeech = (text, options) => ai.textToSpeech(text, options);

@@ -25,48 +25,78 @@ Return ONLY raw JSON (no markdown, no code fences, no extra text) in exactly thi
 
 export function generateLessonPrompt({ courseTitle, moduleTitle, lessonTitle, siblingTitles = [] }) {
   const others = siblingTitles.filter((t) => t !== lessonTitle);
-  return `You are an expert teacher writing ONE lesson of an online course for beginners.
+  return `You are the best teacher your student has ever had. You are writing ONE lesson of an online course
+for a motivated beginner who has never seen this topic before.
 
 Course: "${courseTitle}"
 Module: "${moduleTitle}"
 Lesson to write: "${lessonTitle}"
 ${others.length ? `Other lessons in this module (do not repeat their content): ${others.map((t) => `"${t}"`).join(', ')}` : ''}
 
-Write a clear, friendly, accurate lesson (about 600-900 words, not counting the quiz).
+How great teachers write (follow ALL of these):
+- Start from what the student already knows, then build up one idea at a time. Never skip steps.
+- Define every new term in plain words the FIRST time it appears (bold the term).
+- Explain WHY before HOW: what problem does this solve, and what goes wrong without it?
+- Use one concrete everyday analogy for the core idea, then connect it back to the real thing.
+- Show a worked example. If the topic involves code, write a short realistic code block and follow it with a
+  paragraph that walks through what the important lines do, in order. If it doesn't involve code, walk
+  through a realistic case or scenario step by step instead.
+- Short, clear sentences. No filler or hype words ("powerful", "seamlessly", "in today's world", "dive in").
+- Be accurate. Prefer current, widely used practices.
+- Length: about 900-1200 words before the quiz.
 
 Return ONLY raw JSON (no markdown, no code fences, no extra text) in exactly this shape:
 {
   "title": "string",
-  "objectives": ["3 to 5 learning objectives, each starting with a verb like Understand, Identify, Apply, Compare"],
+  "objectives": ["3 to 5 concrete objectives, each starting with a verb: Explain, Identify, Write, Compare, Use..."],
   "content": [ blocks... ]
 }
 
 Allowed block types:
 {"type": "heading", "text": "string"}
 {"type": "paragraph", "text": "string"}   // 2-5 sentences; you may use **bold** and \`inline code\`
-{"type": "code", "language": "string", "text": "string"}   // ONLY if the topic involves programming or code genuinely helps
-{"type": "video", "query": "string"}   // exactly ONE: a YouTube search query that would find a great explainer for this lesson
+{"type": "list", "items": ["string", "string"]}   // 2-6 short bullet points (steps, comparisons, key facts)
+{"type": "tip", "text": "string"}   // one highlighted insight, rule of thumb, or warning
+{"type": "code", "language": "string", "text": "string"}   // ONLY when code genuinely helps; keep it short and runnable
+{"type": "video", "query": "string"}   // exactly ONE: a specific YouTube search query for a great explainer of THIS lesson
 {"type": "mcq", "question": "string", "options": ["A", "B", "C", "D"], "answer": 0, "explanation": "string"}
-// "answer" is the 0-based index of the correct option; "explanation" says why it is correct.
+// "answer" = 0-based index of the correct option. Wrong options must be plausible mistakes a beginner would make.
+// "explanation" says why the right answer is right AND why the most tempting wrong answer is wrong.
 
 Structure:
-1. A short introduction paragraph (why this matters).
+1. Introduction paragraph: why this matters, with a relatable situation.
 2. The video block.
-3. 3-5 sections, each a heading followed by paragraphs (and a code block where relevant). Use concrete examples.
-4. A heading "Key takeaways" followed by one paragraph summarising the lesson.
-5. A heading "Check your understanding" followed by 4-5 mcq blocks that test understanding, not memorisation.`;
+3. 3-4 teaching sections (heading + paragraphs, plus a list, tip or code block where they help). Include the analogy
+   and the worked example here.
+4. A heading "Common mistakes" followed by a list of 2-4 real beginner mistakes, each with how to avoid it.
+5. A heading "Key takeaways" followed by a list of 3-5 one-line takeaways.
+6. A heading "Check your understanding" followed by 4-5 mcq blocks that test understanding and application,
+   not memorisation.`;
 }
 
 export function generateHinglishPrompt({ lessonTitle, lessonText }) {
-  return `You are a friendly Indian teacher. Explain the lesson below to a student in Hinglish:
-Hindi written in Devanagari script, naturally mixed with English technical words written in English
-(for example: "React में useState एक hook है जो component की state को manage करता है").
+  return `You are a friendly, patient Indian teacher (like a favourite college senior). Explain the lesson below to a
+student in Hinglish, the way Indian students actually talk: Hindi sentences naturally mixed with English
+technical words.
 
-Rules:
-- 150 to 220 words, spoken style, warm and encouraging, like you are talking to the student.
-- Cover the main idea, one simple real-life example, and the key takeaway.
-- Plain text only: no markdown, no bullet points, no emojis, no code. Describe code in words.
-- Keep technical terms (function, variable, database, API, etc.) in English.
+Write the SAME explanation in two scripts:
+1. "roman": Hinglish in Roman/English letters, the way people type on WhatsApp.
+   Example: "Dekho, React mein useState ek hook hai jo component ki state ko manage karta hai."
+2. "devanagari": exactly the same sentences, with the Hindi words in Devanagari and English technical words
+   left in English letters (so a Hindi text-to-speech voice can read it).
+   Example: "देखो, React में useState एक hook है जो component की state को manage करता है।"
+
+Rules for the explanation:
+- 220 to 320 words, spoken style, warm and encouraging. Talk directly to the student ("tum", "dekho", "samjho").
+  Do not call the student "beta".
+- Cover, in order: what the concept is in one simple line; why we need it; one everyday Indian example
+  (chai stall, cricket, train ticket, mobile recharge, etc.) and how it maps to the concept; how it works in
+  practice (describe any code in words, no code symbols); one common mistake to avoid; a two-line recap.
+- Keep technical terms (function, variable, state, database, API, etc.) in English.
+- Short sentences, each ending with a full stop or question mark (sentences are read aloud one by one).
+- Plain text inside the strings: no markdown, no bullet points, no emojis.
+
+Return ONLY raw JSON: {"roman": "string", "devanagari": "string"}
 
 Lesson title: ${lessonTitle}
 Lesson content:

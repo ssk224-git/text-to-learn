@@ -35,30 +35,31 @@ const isRetryable = (err) => RETRYABLE.has(Number(err?.status ?? err?.code)) || 
 // Models that rejected the thinking setting; we stop sending it to them.
 const noThinkingSupport = new Set();
 
-async function callModel(model, prompt, { json, temperature }) {
-  const useThinking = env.geminiThinkingLevel !== 'off' && !noThinkingSupport.has(model);
+async function callModel(model, prompt, { json, temperature, thinking }) {
+  const level = thinking || env.geminiThinkingLevel;
+  const useThinking = level !== 'off' && !noThinkingSupport.has(`${model}:${level}`);
   const config = {
     temperature,
     ...(json ? { responseMimeType: 'application/json' } : {}),
-    ...(useThinking ? { thinkingConfig: { thinkingLevel: env.geminiThinkingLevel } } : {}),
-    httpOptions: { timeout: 90_000 },
+    ...(useThinking ? { thinkingConfig: { thinkingLevel: level } } : {}),
+    httpOptions: { timeout: 120_000 },
   };
   try {
     return await getClient().models.generateContent({ model, contents: prompt, config });
   } catch (err) {
     if (useThinking && Number(err?.status) === 400 && /think/i.test(String(err?.message))) {
-      noThinkingSupport.add(model);
-      return callModel(model, prompt, { json, temperature });
+      noThinkingSupport.add(`${model}:${level}`); // this model rejects this level: use its default
+      return callModel(model, prompt, { json, temperature, thinking: 'off' });
     }
     throw err;
   }
 }
 
-export async function generateText(prompt, { json = false, temperature = 0.7 } = {}) {
+export async function generateText(prompt, { json = false, temperature = 0.7, thinking } = {}) {
   let lastError;
   for (const model of env.geminiModels) {
     try {
-      const response = await callModel(model, prompt, { json, temperature });
+      const response = await callModel(model, prompt, { json, temperature, thinking });
       const usage = response.usageMetadata || {};
       return {
         text: response.text ?? '',

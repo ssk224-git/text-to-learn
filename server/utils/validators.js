@@ -70,6 +70,16 @@ function normalizeBlock(block) {
       const text = str(block.text);
       return text ? { type, text } : null;
     }
+    case 'list': {
+      const items = (Array.isArray(block.items) ? block.items : []).map(str).filter(Boolean).slice(0, 10);
+      return items.length ? { type, items } : null;
+    }
+    case 'tip':
+    case 'callout':
+    case 'note': {
+      const text = str(block.text);
+      return text ? { type: 'tip', text } : null;
+    }
     case 'code': {
       const text = typeof block.text === 'string' ? block.text.replace(/\s+$/, '') : str(block.code);
       return text ? { type, language: str(block.language).toLowerCase() || 'text', text } : null;
@@ -125,12 +135,23 @@ export function normalizeLesson(raw) {
   return { value: { title: str(raw.title), objectives, content }, problems };
 }
 
+// Checks the two-script Hinglish explanation ({ roman, devanagari }).
+export function normalizeHinglish(raw) {
+  const roman = str(raw?.roman).replace(/[*#`]/g, '');
+  const devanagari = str(raw?.devanagari).replace(/[*#`]/g, '');
+  const problems = [];
+  if (roman.split(/\s+/).length < 80) problems.push('"roman" explanation is missing or too short');
+  if (!/[ऀ-ॿ]/.test(devanagari)) problems.push('"devanagari" must contain Hindi in Devanagari script');
+  return { value: { roman, devanagari }, problems };
+}
+
 // Plain text version of a lesson (used for the Hinglish explanation prompt).
 export function lessonToPlainText(lesson, maxChars = 6000) {
   const lines = [];
   for (const b of lesson.content || []) {
-    if (b.type === 'heading' || b.type === 'paragraph') lines.push(b.text);
-    if (b.type === 'code') lines.push(`[Code example in ${b.language}]`);
+    if (b.type === 'heading' || b.type === 'paragraph' || b.type === 'tip') lines.push(b.text);
+    if (b.type === 'list') lines.push(b.items.map((i) => `- ${i}`).join('\n'));
+    if (b.type === 'code') lines.push(`[Code example in ${b.language}]\n${b.text.slice(0, 600)}`);
   }
   return lines.join('\n').replace(/\*\*|`/g, '').slice(0, maxChars);
 }
