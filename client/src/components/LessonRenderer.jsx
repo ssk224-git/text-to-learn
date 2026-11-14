@@ -4,10 +4,14 @@ import ParagraphBlock from './blocks/ParagraphBlock.jsx';
 import CodeBlock from './blocks/CodeBlock.jsx';
 import VideoBlock from './blocks/VideoBlock.jsx';
 import MCQBlock from './blocks/MCQBlock.jsx';
+import ListBlock from './blocks/ListBlock.jsx';
+import TipBlock from './blocks/TipBlock.jsx';
 
 const BLOCKS = {
   heading: HeadingBlock,
   paragraph: ParagraphBlock,
+  list: ListBlock,
+  tip: TipBlock,
   code: CodeBlock,
   video: VideoBlock,
   mcq: MCQBlock,
