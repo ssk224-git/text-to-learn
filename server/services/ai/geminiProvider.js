@@ -28,34 +28,63 @@ function friendlyError(err, model) {
   return err;
 }
 
-export async function generateText(prompt, { json = false, temperature = 0.7 } = {}) {
-  const model = env.geminiModel;
+// Errors worth trying the next model for: overloaded, rate-limited, retired, timed out.
+const RETRYABLE = new Set([404, 429, 500, 503, 504]);
+const isRetryable = (err) => RETRYABLE.has(Number(err?.status ?? err?.code)) || /timed? ?out|abort/i.test(String(err?.message));
+
+// Models that rejected the thinking setting; we stop sending it to them.
+const noThinkingSupport = new Set();
+
+async function callModel(model, prompt, { json, temperature }) {
+  const useThinking = env.geminiThinkingLevel !== 'off' && !noThinkingSupport.has(model);
+  const config = {
+    temperature,
+    ...(json ? { responseMimeType: 'application/json' } : {}),
+    ...(useThinking ? { thinkingConfig: { thinkingLevel: env.geminiThinkingLevel } } : {}),
+    httpOptions: { timeout: 90_000 },
+  };
   try {
-    const response = await getClient().models.generateContent({
-      model,
-      contents: prompt,
-      config: {
-        temperature,
-        ...(json ? { responseMimeType: 'application/json' } : {}),
-      },
-    });
-    const usage = response.usageMetadata || {};
-    return {
-      text: response.text ?? '',
-      model,
-      usage: {
-        promptTokens: usage.promptTokenCount || 0,
-        outputTokens: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0),
-        totalTokens: usage.totalTokenCount || 0,
-      },
-    };
+    return await getClient().models.generateContent({ model, contents: prompt, config });
   } catch (err) {
-    throw friendlyError(err, model);
+    if (useThinking && Number(err?.status) === 400 && /think/i.test(String(err?.message))) {
+      noThinkingSupport.add(model);
+      return callModel(model, prompt, { json, temperature });
+    }
+    throw err;
   }
 }
 
+export async function generateText(prompt, { json = false, temperature = 0.7 } = {}) {
+  let lastError;
+  for (const model of env.geminiModels) {
+    try {
+      const response = await callModel(model, prompt, { json, temperature });
+      const usage = response.usageMetadata || {};
+      return {
+        text: response.text ?? '',
+        model,
+        usage: {
+          promptTokens: usage.promptTokenCount || 0,
+          outputTokens: (usage.candidatesTokenCount || 0) + (usage.thoughtsTokenCount || 0),
+          totalTokens: usage.totalTokenCount || 0,
+        },
+      };
+    } catch (err) {
+      lastError = err;
+      if (!isRetryable(err)) break;
+      console.warn(`[ai] ${model} failed (${err.status ?? err.message}); trying the next model`);
+    }
+  }
+  throw friendlyError(lastError, env.geminiModels.join(', '));
+}
+
+// After a quota/permission error, skip the voice model for a while instead of failing on every click.
+// (On Gemini's free tier the audio models have no quota, so the browser voice is used instead.)
+let ttsBlockedUntil = 0;
+
 export async function textToSpeech(text, { voice = 'Kore' } = {}) {
   const model = env.geminiTtsModel;
+  if (Date.now() < ttsBlockedUntil) throw new AppError(503, 'AI voice is unavailable right now.');
   try {
     const response = await getClient().models.generateContent({
       model,
@@ -70,6 +99,7 @@ export async function textToSpeech(text, { voice = 'Kore' } = {}) {
     const rate = Number(/rate=(\d+)/.exec(part.inlineData.mimeType || '')?.[1]) || 24000;
     return pcmToWav(Buffer.from(part.inlineData.data, 'base64'), { sampleRate: rate });
   } catch (err) {
+    if ([400, 403, 429].includes(Number(err?.status))) ttsBlockedUntil = Date.now() + 30 * 60 * 1000;
     throw friendlyError(err, model);
   }
 }
